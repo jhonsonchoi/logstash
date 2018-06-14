@@ -1,0 +1,2 @@
+#path.data: /home/elastic/enuri/logstash/qa/mod_no_0
+path.logs: /home/elastic/enuri/logstash/qa/log

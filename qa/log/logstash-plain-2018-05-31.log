@@ -1,0 +1,1 @@
+[2018-06-01T00:03:19,003][INFO ][logstash.pipeline        ] Pipeline has terminated {:pipeline_id=>"main", :thread=>"#<Thread:0x6736ef28@/usr/share/logstash/logstash-core/lib/logstash/pipeline.rb:246 run>"}

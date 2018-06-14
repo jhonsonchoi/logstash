@@ -1,0 +1,424 @@
+PUT _template/template_qa_enuri_main
+{
+  "order": 0,
+  "index_patterns": [
+    "qa-enuri-main-*"
+  ],
+  "settings": {
+    "index": {
+       "analysis": {
+          "tokenizer": {
+            "mecab_tokenizer": {
+              "type": "mecab_ko_similarity_measure_tokenizer",
+              "mecab_args": "-d /usr/lib64/mecab/dic/mecab-ko-dic-qa",
+              "compound_noun_min_length": 2,
+              "use_adjective_and_verb_original_form": false
+            },     
+            "mecab_s_tokenizer": {
+              "type": "seunjeon_tokenizer",
+              "index_eojeol": false,
+              "pos_tagging": false,
+              "user_words": ["낄끼+빠빠,-100", "c\\+\\+", "버카충", "abc마트"]
+            }          
+          },
+          "filter": {
+            "code" : {
+               "type" : "pattern_capture",
+               "preserve_original" : false,
+               "patterns" : [
+                  "((\\w+)-(\\w+))"
+               ]
+            },
+            "default_synonym": {
+              "type": "dynamic_synonym",
+              "synonyms_path": "qa/enuri_synonyms.txt",
+              "interval": "60"
+            },
+            "hanja_synonym": {
+              "type": "dynamic_synonym",
+              "synonyms_path": "qa/enuri_hanja-synonyms.txt",
+              "interval": "60"
+            },
+            "stop": {
+              "type": "stop",
+              "stopwords_path": "qa/enuri_stopwords.txt"
+            },
+            "enuri_filter": {
+              "type": "pattern_capture",
+              "patterns": [
+                  "((\\W+)|(\\d+)|([a-zA-Z]+))"
+                ],
+              "preserve_original": "true"
+            },
+            "compounder": {
+              "type": "catenator",
+              "compound_words_path": "qa/enuri_compounds.txt"
+            },
+            "plus_unit": {
+              "type": "plus_unit",
+              "unit_words_path": "qa/enuri_unitwords.txt"
+            },
+            "two_litter": {
+              "type": "plus_dict",
+              "dict_words_path": "qa/enuri_specialwords.txt"
+            },
+            "delimiter": {
+              "type": "delimiter",
+              "preserve_original": true
+            }
+          },
+          "char_filter": {
+            "comma_filter": {
+              "pattern": """(\d+),(?=\d)""",
+              "type": "pattern_replace",
+              "replacement": "$1"
+            },
+            "punc_filter": {
+              "pattern": """[:\[\]]""",
+              "type": "pattern_replace",
+              "replacement": " "
+            }
+          },
+          "analyzer": {
+            "oreum": {
+              "type": "custom",
+              "char_filter": [
+                "html_strip",
+                "comma_filter"
+              ],
+              "tokenizer": "mecab_tokenizer",
+              "filter": [
+                "plus_stop",
+                "plus_unit",
+                "two_litter",
+                "plus_coder",
+                "delimiter",
+                "plus_offset",
+                "compounder",
+                "default_synonym",
+                "hanja_synonym",
+                "stop"
+              ]
+            },
+            "less_oreum": {
+              "type": "custom",
+              "char_filter": [
+                "html_strip",
+                "comma_filter"
+              ],
+              "tokenizer": "mecab_tokenizer",
+              "filter": [
+                "plus_stop",
+                "plus_unit",
+                "two_litter",
+                "plus_coder",
+                "delimiter",
+                "plus_offset",
+                "compounder",
+                "stop"
+              ]
+            },
+            "korean": {
+              "type": "custom",
+              "char_filter": [
+                "html_strip",
+                "comma_filter"
+              ],
+              "tokenizer": "mecab_tokenizer",
+              "filter": [
+                "plus_stop",
+                "plus_unit",
+                "two_litter",
+                "plus_coder",
+                "delimiter",
+                "plus_offset",
+                "default_synonym",
+                "hanja_synonym",
+                "stop"
+              ]
+            },
+            "less_korean": {
+              "type": "custom",
+              "char_filter": [
+                "html_strip",
+                "comma_filter"
+              ],
+              "tokenizer": "mecab_tokenizer",
+              "filter": [
+                "plus_stop",
+                "plus_unit",
+                "two_litter",
+                "plus_coder",
+                "delimiter",
+                "plus_offset",
+                "stop"
+              ]
+            },
+            "enuri_basic": {
+              "type": "custom",
+              "char_filter": [
+                "html_strip",
+                "comma_filter"
+              ],
+              "tokenizer": "whitespace",
+              "filter": [
+                "lowercase",
+                "default_synonym",
+                "hanja_synonym",
+                "stop"
+              ]
+            },
+            "less_enuri_basic": {
+              "type": "custom",
+              "char_filter": [
+                "html_strip",
+                "comma_filter"
+              ],
+              "tokenizer": "whitespace",
+              "filter": [
+                "lowercase",
+                "stop"
+              ]
+            }
+          }
+        },
+        "number_of_shards": "6",
+        "number_of_replicas": "1"
+      }
+    },
+    "mappings": {
+      "_doc": {
+        "_source": {
+          "enabled": true
+        },
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "to_all": {
+            "type": "text",
+            "analyzer": "less_korean",
+            "search_analyzer": "korean",
+            "fields": {
+              "oreum": { 
+                "type":  "text",
+                "analyzer": "oreum"
+              },
+              "search_oreum": {
+                "type": "text",
+                "analyzer": "less_korean",
+                "search_analyzer": "oreum"
+              },
+              "oreum_search": {
+                "type": "text",
+                "analyzer": "less_oreum",
+                "search_analyzer": "korean"
+              }              
+            }
+          },
+          "model_factory": {
+            "type": "text",
+            "analyzer": "less_enuri_basic",
+            "fields": {
+              "model_factory_2": { 
+                "type":  "text",
+                "analyzer": "less_enuri_basic",
+                "search_analyzer": "enuri_basic"
+              }
+            }
+          },
+          "modelnm2": {
+            "type": "text",
+            "analyzer": "less_enuri_basic",
+            "fields": {
+              "modelnm2_2": { 
+                "type":  "text",
+                "analyzer": "less_enuri_basic",
+                "search_analyzer": "enuri_basic"
+              }
+            }
+          },
+          "modelno": {
+            "type": "long"
+          },
+          "pl_no": {
+            "type": "long"
+          },
+          "modelno_group": {
+            "type": "integer"
+          },
+          "modelno_group_flag": {
+            "type": "keyword"
+          },
+          "category": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "cg": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "cat1": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "cat2": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "cat3": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "cat4": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "ca_code": {
+            "type": "keyword"
+          },
+          "ca_dept_mcode": {
+            "type": "keyword"
+          },
+          "ca_dept_code": {
+            "type": "keyword"
+          },
+          "ca_dept_dcode": {
+            "type": "keyword"
+          },
+          "ca_lcode_ran": {
+            "type": "keyword"
+          },
+          "ca_mcode_ran": {
+            "type": "keyword"
+          },
+          "ca_scode_ran": {
+            "type": "keyword"
+          },
+          "ca_dcode_ran": {
+            "type": "keyword"
+          },
+          "shop_code": {
+            "type": "integer"
+          },
+          "shop_name": {
+            "type": "keyword"
+          },
+          "shop_name_code": {
+            "type": "keyword"
+          },
+          "modelnm": {
+            "type": "text",
+            "analyzer": "whitespace"
+          },
+          "factory": {
+            "type": "keyword"
+          },
+          "brand": {
+            "type": "keyword"
+          },
+          "popular": {
+            "type": "integer"
+          },
+          "popular2": {
+            "type": "integer"
+          },
+          "sale_cnt": {
+            "type": "integer"
+          },
+          "minprice": {
+            "type": "integer"
+          },
+          "maxprice": {
+            "type": "integer"
+          },
+          "minprices": {
+            "type": "integer"
+          },
+          "c_date": {
+            "type": "keyword"
+          },
+          "mallcnt": {
+            "type": "integer"
+          },
+          "mallcnt_flag": {
+            "type": "keyword"
+          },
+          "spec": {
+            "type": "text",
+            "analyzer": "whitespace"
+          },
+          "openexpectflag": {
+            "type": "keyword"
+          },
+          "condiname": {
+            "type": "text",
+            "analyzer": "whitespace"
+          },
+          "keyword": {
+            "type": "text",
+            "analyzer": "whitespace"
+          },
+          "keyword2": {
+            "type": "text",
+            "analyzer": "whitespace"
+          },
+          "brandcode1": {
+            "type": "keyword"
+          },
+          "brandcode2": {
+            "type": "text",
+            "analyzer": "whitespace"
+          },
+          "specopt": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "bookflag": {
+            "type": "keyword"
+          },
+          "useflag": {
+            "type": "keyword"
+          },
+          "weight": {
+            "type": "integer"
+          },
+          "minprice3": {
+            "type": "integer"
+          },
+          "minprice2": {
+            "type": "integer"
+          },
+          "maxprice3": {
+            "type": "integer"
+          },
+          "mobile_flag": {
+            "type": "keyword"
+          },
+          "minprice4": {
+            "type": "integer"
+          },
+          "store_flag": {
+            "type": "keyword"
+          },
+          "bbs_num": {
+            "type": "integer"
+          },
+          "zum_check": {
+            "type": "keyword"
+          },
+          "service_gubun": {
+            "type": "keyword"
+          },
+          "minprice5": {
+            "type": "integer"
+          },
+          "ext_condi_flag": {
+            "type": "keyword"
+          }
+        }
+      }
+    },
+    "aliases": {}
+}
+

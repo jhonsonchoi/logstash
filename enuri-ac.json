@@ -1,0 +1,103 @@
+PUT _template/template_enuri_ac
+{
+    "order": 0,
+    "index_patterns": [
+      "enuri-ac-*"
+    ],
+    "settings": {
+      "index": {
+        "analysis": {
+          "char_filter": {
+          },
+          "tokenizer": {
+          },
+          "filter": {
+            "edge10gram": {
+              "type": "edge_ngram",
+              "min_gram": "2",
+              "max_gram": "10"
+            },
+            "edge6gram": {
+              "type": "edge_ngram",
+              "min_gram": "2",
+              "max_gram": "6"
+            }
+          },
+          "analyzer": {
+            "jamo": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": ["hangul_jamo", "edge10gram", "lowercase"]
+            },
+            "jamo_search": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": ["hangul_jamo", "lowercase"]
+            },
+            "chosung": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": ["hangul_chosung", "edge6gram", "lowercase"]
+            },
+            "chosung_search": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": ["lowercase"]
+            }
+          }
+        },
+        "number_of_shards": "6",
+        "number_of_replicas": "1"
+      }
+    },
+    "mappings": {
+      "_doc": {
+        "_source": {
+          "enabled": true
+        },
+        "properties": {
+          "srch_kwd_hval": {
+            "type": "keyword"
+          },
+          "srch_kwd": {
+            "type": "text",
+            "analyzer": "jamo",
+            "search_analyzer": "jamo_search",
+            "fields": {
+              "cho": { 
+                "type": "text",
+                "analyzer": "chosung",
+                "search_analyzer": "chosung_search"
+              }
+            }
+          },
+          "org_cd": {
+            "type": "keyword"
+          },
+          "cate_shc_yn": {
+            "type": "keyword"
+          },
+          "pp_srw_inq_cnt": {
+            "type": "integer"
+          },
+          "model_ppr": {
+            "type": "integer"
+          },
+          "cate_cd": {
+            "type": "keyword"
+          },
+          "cate_shc_pth_nm": {
+            "type": "keyword"
+          },
+          "book_yn": {
+            "type": "keyword"
+          },
+          "reg_dtm": {
+            "type": "date"
+          }
+        }
+      }
+    },
+    "aliases": {}
+}
+
